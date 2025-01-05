@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-sql-app-deployment
+spec:
+  replicas: 1  # You can scale this by increasing the replica count
+  selector:
+    matchLabels:
+      app: flask-sql-app
+  template:
+    metadata:
+      labels:
+        app: flask-sql-app
+    spec:
+      containers:
+        - name: flask-sql-app
+          image: dockerahul187/flask-sql-app:latest  # Replace with your image name
+          ports:
+            - containerPort: 8080  # Port Flask will run on
+          env:
+            - name: FLASK_APP
+              value: "app.py"
+            - name: FLASK_ENV
+              value: "deployment"
+          imagePullPolicy: Always

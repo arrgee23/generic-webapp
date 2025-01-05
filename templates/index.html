@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dataset Query App</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+        }
+        button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Public dataset explorer</h1>
+    <h2>Available datasets to explore</h2>
+    <ul>
+        <li><strong>titanic_passengers:</strong> Table containing information about the passengers of the Titanic.</li>
+        <li><strong>bitcoin:</strong> Table containing details about bitcoin rate.</li>
+        </ul>
+    <div>
+        <label for="sqlQuery">Enter SQL Query:</label><br>
+        <textarea id="sqlQuery" placeholder="SELECT * FROM titanic_passengers limit 3"></textarea><br>
+        <button onclick="executeQuery()">Execute Query</button>
+    </div>
+    
+    <h2>Query Results</h2>
+    <div id="errorMessage" style="color:red; display:none;"></div>
+    <table id="resultTable" style="display:none;">
+        <thead></thead>
+        <tbody></tbody>
+    </table>
+    
+    <script>
+        async function executeQuery() {
+            const query = document.getElementById('sqlQuery').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const resultTable = document.getElementById('resultTable');
+            
+            if (!query.trim()) {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Please enter a valid SQL query.';
+                resultTable.style.display = 'none';
+                return;
+            }
+            
+            errorMessage.style.display = 'none';
+            
+            try {
+                const response = await fetch('/execute_query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = data.error || 'An error occurred.';
+                    resultTable.style.display = 'none';
+                }
+            } catch (error) {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Failed to execute query: ' + error.message;
+                resultTable.style.display = 'none';
+            }
+        }
+        
+        function displayResults(data) {
+            const table = document.getElementById('resultTable');
+            const thead = table.querySelector('thead');
+            const tbody = table.querySelector('tbody');
+            
+            tbody.innerHTML = '';  // Clear any existing rows
+            thead.innerHTML = '';  // Clear the header row
+            
+            const parsedData = JSON.parse(data);
+            
+            // Set table header from keys
+            const headers = parsedData.columns;
+            const headerRow = document.createElement('tr');
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            
+            // Set table rows from data
+            parsedData.data.forEach(row => {
+                const rowElement = document.createElement('tr');
+                row.forEach(cell => {
+                    const td = document.createElement('td');
+                    td.textContent = cell;
+                    rowElement.appendChild(td);
+                });
+                tbody.appendChild(rowElement);
+            });
+            
+            table.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
