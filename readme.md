@@ -1,0 +1,1 @@
+This is a Repository for a simple flask python app that is hosted using docker and kuberntes. Users can query a clickhouse cluster and get simple results.
